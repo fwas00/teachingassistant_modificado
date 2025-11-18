@@ -31,11 +31,11 @@ describe('Servidor TeachingAssistant', () => {
     return request
       .post({
         uri: `${baseUrl}/auth/login`,
-        json: { tipo: 'professor', identificador: 'helena@universidade.edu', senha: 'prof123' }
+        json: { tipo: 'Professor', identificador: 'ana@cin.ufpe.br', senha: '123456' }
       })
       .then((resposta: any) => {
         expect(resposta.success).toBe(true);
-        expect(resposta.data.usuario.nome).toContain('Helena');
+        expect(resposta.data.usuario.nome).toContain('Ana');
       });
   });
 

@@ -28,11 +28,11 @@ class DataStore {
   }
 
   private seed(): void {
-    const professor: Professor = {
+     const professor: Professor = {
       id: 'prof-1',
-      nome: 'Profa. Helena',
-      email: 'helena@universidade.edu',
-      senha: 'prof123',
+      nome: 'Profa. Ana',
+      email: 'ana@cin.ufpe.br',
+      senha: '123456',
       turmas: ['turma-1']
     };
 
