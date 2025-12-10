@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "teste": "NODE_PATH=./tests-acceptance/node_modules ./tests-acceptance/node_modules/.bin/protractor ./tests/support/protractor.conf.js"
+    "teste": "cucumber-js tests/features --require tests/support/world.js --require tests/support/hooks.js --require tests/steps --require tests/service --publish-quiet --format progress --format summary"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^10.9.0",
+    "@playwright/test": "^1.49.1",
+    "axios": "^1.7.7",
+    "form-data": "^4.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
   }
 }

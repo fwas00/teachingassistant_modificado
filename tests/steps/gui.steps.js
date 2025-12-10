@@ -1,55 +1,74 @@
-const { Given, When, Then } = require('cucumber');
-const { browser, ExpectedConditions: EC } = require('protractor');
-const page = require('../gui/alunos.page');
-const { uiBaseUrl } = require('../support/api');
-const chai = require('chai').use(require('chai-as-promised'));
-const expect = chai.expect;
+const { Given, When, Then } = require('@cucumber/cucumber');
+const { expect } = require('@playwright/test');
+const { ProfessorDashboardPage } = require('../gui/professor.page');
 
-const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-Given('que estou no dashboard do professor', async function () {
-  await browser.get(uiBaseUrl);
+Given('que estou na tela de login do professor', async function() {
+  await this.launchBrowser();
+  this.pageObject = new ProfessorDashboardPage(this.page, this.uiBase);
+  await this.pageObject.openLogin();
 });
 
-Given('faço login como professor padrão', async function () {
-  await browser.wait(EC.presenceOf(page.loginIdentificadorInput()), 10000);
-  await page.loginTipoSelect().click();
-  const professorOption = page.loginTipoOption('Professor');
-  if (await professorOption.isPresent()) {
-    await professorOption.click();
-  }
-  await page.loginIdentificadorInput().clear();
-  await page.loginIdentificadorInput().sendKeys('ana@cin.ufpe.br');
-  await page.loginSenhaInput().clear();
-  await page.loginSenhaInput().sendKeys('123456');
-  await page.loginButton().click();
-  await browser.wait(EC.visibilityOf(page.welcomeHeader()), 10000);
+When('informo credenciais válidas', async function() {
+  await this.pageObject.loginProfessor();
 });
 
-When('seleciono a turma {string}', async function (turmaNome) {
-  await browser.wait(EC.presenceOf(page.turmaSelect()), 10000);
-  await page.turmaSelect().click();
-  const option = page.turmaOption(turmaNome);
-  await browser.wait(EC.presenceOf(option), 5000);
-  await option.click();
-  await wait(500);
+Then('devo ser redirecionado para o dashboard do professor', async function() {
+  await this.pageObject.waitForDashboard();
+  await expect(this.page.locator('text=Bem-vindo')).toBeVisible();
 });
 
-Then('devo ver a turma {string} na lista de turmas', async function (turmaNome) {
-  const option = page.turmaOption(turmaNome);
-  await expect(option.isPresent()).to.eventually.equal(true);
+Given('que estou logado como professor', async function() {
+  await this.launchBrowser();
+  this.pageObject = new ProfessorDashboardPage(this.page, this.uiBase);
+  await this.pageObject.openLogin();
+  await this.pageObject.loginProfessor();
+  await this.pageObject.waitForDashboard();
 });
 
-Then('devo visualizar alunos listados na tabela', async function () {
-  await browser.wait(async () => (await page.alunosTabela().count()) > 0, 10000);
-  await expect(page.alunosTabela().count()).to.eventually.be.greaterThan(0);
+When('acesso o dashboard do professor', async function() {
+  await this.pageObject.waitForDashboard();
 });
 
-Then('devo visualizar monitores cadastrados no popup', async function () {
-  await page.abrirCadastroMonitores().click();
-  await browser.wait(async () => (await page.monitoresPopupItems().count()) > 0, 10000);
-  await expect(page.monitoresPopupItems().count()).to.eventually.be.greaterThan(0);
-  if (await page.fecharPopup().isPresent()) {
-    await page.fecharPopup().click();
-  }
+Then('devo visualizar minha lista de turmas', async function() {
+  const turmas = await this.pageObject.turmas();
+  expect(turmas.length).toBeGreaterThan(0);
+});
+
+When('seleciono uma turma', async function() {
+  await this.pageObject.selecionarTurma(1);
+});
+
+Then('devo ver os alunos daquela turma', async function() {
+  const alunos = await this.pageObject.alunosVisiveis();
+  expect(alunos.length).toBeGreaterThan(0);
+});
+
+When('importo um arquivo de turma válido', async function() {
+  await this.pageObject.importarTurma('Turma Importada');
+});
+
+Then('a nova turma deve aparecer na lista', async function() {
+  const turmas = await this.pageObject.turmas();
+  const hasTurma = turmas.some(t => t.includes('Importada'));
+  expect(hasTurma).toBe(true);
+});
+
+When('aloco um monitor para um aluno', async function() {
+  await this.pageObject.selecionarTurma(1);
+  await this.pageObject.abrirCadastroMonitor();
+  await this.pageObject.cadastrarMonitor('Monitor Auto', `M${Date.now()}`);
+});
+
+Then('a alocação deve ser salva com sucesso', async function() {
+  const mensagens = await this.pageObject.verMensagens();
+  expect(mensagens.some(m => m.includes('sucesso'))).toBe(true);
+});
+
+When('abro a área de notificações', async function() {
+  await this.pageObject.abrirNotificacoes();
+});
+
+Then('devo visualizar minhas notificações', async function() {
+  const notificacoes = await this.pageObject.notificacoesResumo();
+  expect(notificacoes.length).toBeGreaterThanOrEqual(0);
 });

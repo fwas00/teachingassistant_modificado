@@ -1,51 +1,66 @@
-const { BeforeAll, AfterAll, Before, setDefaultTimeout } = require('cucumber');
-const { resetTestState, uiBaseUrl } = require('./api');
-const { browser } = require('protractor');
+const path = require('path');
 const { spawn } = require('child_process');
+const { BeforeAll, AfterAll, Before, After } = require('@cucumber/cucumber');
 
-setDefaultTimeout(60 * 1000);
+let serverModule;
+let frontendProcess;
 
-let serverProcess;
-
-async function waitForServerReady(url) {
-  const deadline = Date.now() + 20000;
-  while (Date.now() < deadline) {
-    try {
-      const res = await fetch(url);
-      if (res.ok) {
-        return true;
-      }
-    } catch (_) {
-      // ignore
-    }
-    await new Promise(r => setTimeout(r, 500));
-  }
-  throw new Error('Servidor não respondeu a tempo.');
+function registerTypeScript() {
+  require('ts-node').register({
+    transpileOnly: true,
+    project: path.join(__dirname, '../../server/ta-server/tsconfig.json')
+  });
 }
 
-BeforeAll(async function () {
-  try {
-    await waitForServerReady(uiBaseUrl);
-    return;
-  } catch (_) {
-    // tentará subir servidor
+async function ensureBackend() {
+  if (!serverModule) {
+    registerTypeScript();
+    serverModule = require('../../server/ta-server/ta-server.ts');
   }
+}
 
-  serverProcess = spawn('npm', ['run', 'start', '--prefix', 'server/ta-server'], {
+function startFrontend() {
+  if (frontendProcess) return;
+  frontendProcess = spawn('npm', ['run', 'start', '--', '--host', '0.0.0.0', '--port', '4250'], {
+    cwd: path.join(__dirname, '../../gui/ta-gui'),
     stdio: 'inherit',
-    shell: true
+    shell: false
   });
+}
 
-  await waitForServerReady(uiBaseUrl);
+async function resetData() {
+  registerTypeScript();
+  const { resetStore } = require('../../server/ta-server/data/store');
+  resetStore();
+}
+
+BeforeAll(async function() {
+  await ensureBackend();
+  startFrontend();
 });
 
-Before(async function () {
-  await resetTestState();
-  await browser.waitForAngularEnabled(false);
+Before({ tags: 'not @api' }, async function() {
+  await ensureBackend();
+  await resetData();
+  await this.launchBrowser();
+  await this.page.goto(this.uiBase);
 });
 
-AfterAll(async function () {
-  if (serverProcess) {
-    serverProcess.kill('SIGTERM');
+Before({ tags: '@api' }, async function() {
+  await ensureBackend();
+  await resetData();
+});
+
+After(async function() {
+  await this.closeBrowser();
+});
+
+AfterAll(async function() {
+  if (serverModule && serverModule.closeServer) {
+    serverModule.closeServer();
   }
+  if (frontendProcess) {
+    frontendProcess.kill('SIGTERM');
+  }
+  await this.shutdown();
 });

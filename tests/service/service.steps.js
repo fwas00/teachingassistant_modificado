@@ -1,55 +1,92 @@
-const { Given, When, Then } = require('cucumber');
-const { apiGet, apiPost } = require('../support/api');
-const chai = require('chai');
-const expect = chai.expect;
+const { Given, When, Then } = require('@cucumber/cucumber');
+const { expect } = require('@playwright/test');
 
-let lastResponse;
-let credenciais = { identificador: 'ana@cin.ufpe.br', senha: '123456' };
-
-Given('que possuo credenciais válidas de professor', function () {
-  credenciais = { identificador: 'ana@cin.ufpe.br', senha: '123456' };
+Given('o estado do sistema é reiniciado', async function() {
+  // reset já executado nos hooks, mas mantemos a asserção para garantir previsibilidade
+  const turmas = await this.api.get('/turmas?professorId=prof-1');
+  expect(turmas.status).toBe(200);
 });
 
-When('eu faço login como professor', async function () {
-  lastResponse = await apiPost('/auth/login', {
+When('realizo POST para "{string}" com credenciais do professor', async function(endpoint) {
+  this.lastResponse = await this.api.post(endpoint, {
     tipo: 'professor',
-    identificador: credenciais.identificador,
-    senha: credenciais.senha
+    identificador: 'ana@cin.ufpe.br',
+    senha: '123456'
   });
 });
 
-When('eu faço uma requisição GET para {string}', async function (path) {
-  lastResponse = await apiGet(path);
+Then('o serviço deve responder com sucesso e dados do professor', function() {
+  expect(this.lastResponse.status).toBe(200);
+  expect(this.lastResponse.data.success).toBe(true);
+  expect(this.lastResponse.data.data.email).toBe('ana@cin.ufpe.br');
 });
 
-Then('a resposta deve ter status {int}', function (status) {
-  expect(lastResponse.response.status).to.equal(status);
+When('faço GET em "{string}"', async function(endpoint) {
+  this.lastResponse = await this.api.get(endpoint);
 });
 
-Then('o corpo deve conter sucesso verdadeiro', function () {
-  expect(lastResponse.body).to.have.property('success', true);
+Then('devo receber as turmas do professor', function() {
+  expect(this.lastResponse.status).toBe(200);
+  expect(Array.isArray(this.lastResponse.data.data)).toBe(true);
+  expect(this.lastResponse.data.data.length).toBeGreaterThan(0);
 });
 
-Then('o corpo deve conter o professor com email {string}', function (email) {
-  const usuario = lastResponse.body.data || lastResponse.body.usuario || lastResponse.body;
-  expect(usuario).to.have.property('usuario');
-  expect(usuario.usuario).to.have.property('email', email);
+Then('devo receber a lista de alunos da turma', function() {
+  expect(this.lastResponse.status).toBe(200);
+  expect(Array.isArray(this.lastResponse.data.data)).toBe(true);
+  expect(this.lastResponse.data.data[0]).toHaveProperty('nome');
 });
 
-Then('o corpo deve conter a turma {string}', function (nome) {
-  const turmas = lastResponse.body.data || lastResponse.body;
-  const match = (turmas || []).find ? turmas.find(t => t.nome === nome) : undefined;
-  expect(match, 'Turma esperada não encontrada').to.exist;
+When('faço POST em "{string}" com dados válidos', async function(endpoint) {
+  this.lastResponse = await this.api.post(endpoint, {
+    id: 'turma-import',
+    nome: 'Turma Importada',
+    professorId: 'prof-1',
+    alunos: [],
+    monitores: []
+  });
 });
 
-Then('o corpo deve conter o aluno com matrícula {string}', function (matricula) {
-  const alunos = lastResponse.body.data || lastResponse.body;
-  const match = (alunos || []).find ? alunos.find(a => a.matricula === matricula) : undefined;
-  expect(match, 'Aluno esperado não encontrado').to.exist;
+Then('a turma deve ser criada e listada para o professor', async function() {
+  expect([200, 201]).toContain(this.lastResponse.status);
+  const turmas = await this.api.get('/turmas?professorId=prof-1');
+  const existe = turmas.data.data.some(t => t.id === 'turma-import');
+  expect(existe).toBe(true);
 });
 
-Then('o corpo deve conter o monitor com matrícula {string}', function (matricula) {
-  const monitores = lastResponse.body.data || lastResponse.body;
-  const match = (monitores || []).find ? monitores.find(m => m.matricula === matricula) : undefined;
-  expect(match, 'Monitor esperado não encontrado').to.exist;
+When('faço POST em "{string}" para cadastrar um monitor', async function(endpoint) {
+  this.lastResponse = await this.api.post(endpoint, {
+    nome: 'Monitor API',
+    matricula: `M${Date.now()}`
+  }, { headers: { 'x-professor-id': 'prof-1' } });
+});
+
+Then('o monitor deve ser retornado e persistido', async function() {
+  expect(this.lastResponse.status).toBe(200);
+  const lista = await this.api.get('/turmas/turma-1/monitores');
+  const encontrado = lista.data.data.some(m => m.nome === 'Monitor API');
+  expect(encontrado).toBe(true);
+});
+
+When('faço POST em "{string}"', async function(endpoint) {
+  this.lastResponse = await this.api.post(endpoint, {}, { headers: { 'x-professor-id': 'prof-1' } });
+});
+
+Then('devo receber resumo de notificações enviadas', function() {
+  expect(this.lastResponse.status).toBe(200);
+  expect(Array.isArray(this.lastResponse.data.data)).toBe(true);
+});
+
+Then('devo receber o resultado da revalidação', function() {
+  expect(this.lastResponse.status).toBe(200);
+  expect(this.lastResponse.data.data).toHaveProperty('resumo');
+});
+
+When('faço POST em "{string}" com limite máximo {int}', async function(endpoint, limite) {
+  this.lastResponse = await this.api.post(endpoint, { limiteMaximo: limite }, { headers: { 'x-professor-id': 'prof-1' } });
+});
+
+Then('devo receber a confirmação da realocação', function() {
+  expect(this.lastResponse.status).toBe(200);
+  expect(this.lastResponse.data.success).toBe(true);
 });
