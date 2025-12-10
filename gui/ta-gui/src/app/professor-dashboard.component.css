@@ -175,3 +175,27 @@ button.secondary {
 .revalidacao .sucesso {
   color: #1e7b34;
 }
+/* 🔹 Define limite de tamanho apenas para o pop-up de notificações */
+.popup.notificacoes-popup {
+  max-height: 80vh;
+  width: 650px;         /* 👉 Aumentei a largura (antes era ~450px) */
+  max-width: 90vw;      /* Não ultrapassa a tela em telas menores */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🔹 Área interna com rolagem (ul ou div que envolve os itens) */
+.popup.notificacoes-popup .popup-content {
+  max-height: 70vh;         /* Parte rolável — mantém botões sempre visíveis */
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* 🔹 Mantém os botões fixados na parte inferior */
+.popup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: auto;
+}
