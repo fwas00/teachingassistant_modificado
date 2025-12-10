@@ -1,13 +1,14 @@
-const defaultBaseUrl = process.env.API_BASE_URL || 'http://localhost:4250';
+const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
+const uiBaseUrl = process.env.UI_BASE_URL || 'http://localhost:4250';
 
 async function apiGet(path) {
-  const response = await fetch(`${defaultBaseUrl}${path}`);
+  const response = await fetch(`${apiBaseUrl}${path}`);
   const body = await response.json();
   return { response, body };
 }
 
 async function apiPost(path, payload) {
-  const response = await fetch(`${defaultBaseUrl}${path}`, {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -17,7 +18,7 @@ async function apiPost(path, payload) {
 }
 
 async function apiDelete(path) {
-  const response = await fetch(`${defaultBaseUrl}${path}`, { method: 'DELETE' });
+  const response = await fetch(`${apiBaseUrl}${path}`, { method: 'DELETE' });
   let body;
   try {
     body = await response.json();
@@ -27,16 +28,12 @@ async function apiDelete(path) {
   return { response, body };
 }
 
-async function ensureAlunoRemoved(cpf) {
-  if (!cpf) return;
-  await apiDelete(`/alunos/${cpf}`);
-}
-
 async function resetTestState() {
-  const cpfs = ['683', '900', '901', '902', '999'];
-  for (const cpf of cpfs) {
-    await ensureAlunoRemoved(cpf);
+  try {
+    await apiGet('/turmas');
+  } catch (_) {
+    // no-op
   }
 }
 
-module.exports = { apiGet, apiPost, apiDelete, resetTestState, ensureAlunoRemoved, defaultBaseUrl };
+module.exports = { apiGet, apiPost, apiDelete, resetTestState, apiBaseUrl, uiBaseUrl };

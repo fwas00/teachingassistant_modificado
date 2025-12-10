@@ -1,5 +1,5 @@
 const { BeforeAll, AfterAll, Before, setDefaultTimeout } = require('cucumber');
-const { resetTestState, defaultBaseUrl } = require('./api');
+const { resetTestState, uiBaseUrl } = require('./api');
 const { browser } = require('protractor');
 const { spawn } = require('child_process');
 
@@ -25,7 +25,7 @@ async function waitForServerReady(url) {
 
 BeforeAll(async function () {
   try {
-    await waitForServerReady(defaultBaseUrl);
+    await waitForServerReady(uiBaseUrl);
     return;
   } catch (_) {
     // tentará subir servidor
@@ -36,7 +36,7 @@ BeforeAll(async function () {
     shell: true
   });
 
-  await waitForServerReady(defaultBaseUrl);
+  await waitForServerReady(uiBaseUrl);
 });
 
 Before(async function () {

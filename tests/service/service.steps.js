@@ -1,25 +1,25 @@
 const { Given, When, Then } = require('cucumber');
-const { apiGet, apiPost, apiDelete, ensureAlunoRemoved } = require('../support/api');
+const { apiGet, apiPost } = require('../support/api');
 const chai = require('chai');
 const expect = chai.expect;
 
 let lastResponse;
+let credenciais = { identificador: 'ana@cin.ufpe.br', senha: '123456' };
 
-Given('eu cadastro via serviço o aluno {string} com CPF {string}', async function (nome, cpf) {
-  await ensureAlunoRemoved(cpf);
-  lastResponse = await apiPost('/alunos', { nome, cpf });
+Given('que possuo credenciais válidas de professor', function () {
+  credenciais = { identificador: 'ana@cin.ufpe.br', senha: '123456' };
+});
+
+When('eu faço login como professor', async function () {
+  lastResponse = await apiPost('/auth/login', {
+    tipo: 'professor',
+    identificador: credenciais.identificador,
+    senha: credenciais.senha
+  });
 });
 
 When('eu faço uma requisição GET para {string}', async function (path) {
   lastResponse = await apiGet(path);
-});
-
-When('eu faço uma requisição POST para {string} com nome {string} e CPF {string}', async function (path, nome, cpf) {
-  lastResponse = await apiPost(path, { nome, cpf });
-});
-
-When('eu faço uma requisição DELETE para {string}', async function (path) {
-  lastResponse = await apiDelete(path);
 });
 
 Then('a resposta deve ter status {int}', function (status) {
@@ -30,20 +30,26 @@ Then('o corpo deve conter sucesso verdadeiro', function () {
   expect(lastResponse.body).to.have.property('success', true);
 });
 
-Then('o corpo deve conter o aluno com CPF {string}', function (cpf) {
-  const body = lastResponse.body;
-  const alunos = Array.isArray(body) ? body : body.data || body.alunos || [];
-  const match = alunos.find ? alunos.find(a => (a.cpf || a.matricula) === cpf || a.cpf === cpf || a.id === cpf) : undefined;
-  if (!match && body.cpf) {
-    expect(body.cpf).to.equal(cpf);
-    return;
-  }
-  expect(match, 'Aluno esperado não encontrado no corpo da resposta').to.exist;
+Then('o corpo deve conter o professor com email {string}', function (email) {
+  const usuario = lastResponse.body.data || lastResponse.body.usuario || lastResponse.body;
+  expect(usuario).to.have.property('usuario');
+  expect(usuario.usuario).to.have.property('email', email);
 });
 
-Then('o corpo não deve conter o aluno com CPF {string}', function (cpf) {
-  const body = lastResponse.body;
-  const alunos = Array.isArray(body) ? body : body.data || body.alunos || [];
-  const match = alunos.find ? alunos.find(a => (a.cpf || a.matricula) === cpf || a.id === cpf) : undefined;
-  expect(match).to.be.undefined;
+Then('o corpo deve conter a turma {string}', function (nome) {
+  const turmas = lastResponse.body.data || lastResponse.body;
+  const match = (turmas || []).find ? turmas.find(t => t.nome === nome) : undefined;
+  expect(match, 'Turma esperada não encontrada').to.exist;
+});
+
+Then('o corpo deve conter o aluno com matrícula {string}', function (matricula) {
+  const alunos = lastResponse.body.data || lastResponse.body;
+  const match = (alunos || []).find ? alunos.find(a => a.matricula === matricula) : undefined;
+  expect(match, 'Aluno esperado não encontrado').to.exist;
+});
+
+Then('o corpo deve conter o monitor com matrícula {string}', function (matricula) {
+  const monitores = lastResponse.body.data || lastResponse.body;
+  const match = (monitores || []).find ? monitores.find(m => m.matricula === matricula) : undefined;
+  expect(match, 'Monitor esperado não encontrado').to.exist;
 });

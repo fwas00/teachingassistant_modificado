@@ -1,8 +1,8 @@
-const { defaultBaseUrl } = require('./api');
+const { uiBaseUrl } = require('./api');
 
 exports.config = {
   directConnect: true,
-  baseUrl: defaultBaseUrl,
+  baseUrl: uiBaseUrl,
   framework: 'custom',
   frameworkPath: require.resolve('protractor-cucumber-framework'),
   specs: ['../features/**/*.feature'],

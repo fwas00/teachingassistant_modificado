@@ -1,54 +1,55 @@
 const { Given, When, Then } = require('cucumber');
 const { browser, ExpectedConditions: EC } = require('protractor');
-const { ensureAlunoRemoved, apiPost, defaultBaseUrl } = require('../support/api');
 const page = require('../gui/alunos.page');
+const { uiBaseUrl } = require('../support/api');
 const chai = require('chai').use(require('chai-as-promised'));
 const expect = chai.expect;
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-Given('que estou na página de alunos', async function () {
-  await browser.get(defaultBaseUrl);
-  await browser.wait(EC.presenceOf(page.alunosMenu()), 10000).catch(() => Promise.resolve());
-  if (await page.alunosMenu().isPresent()) {
-    await page.alunosMenu().click();
+Given('que estou no dashboard do professor', async function () {
+  await browser.get(uiBaseUrl);
+});
+
+Given('faço login como professor padrão', async function () {
+  await browser.wait(EC.presenceOf(page.loginIdentificadorInput()), 10000);
+  await page.loginTipoSelect().click();
+  const professorOption = page.loginTipoOption('Professor');
+  if (await professorOption.isPresent()) {
+    await professorOption.click();
   }
+  await page.loginIdentificadorInput().clear();
+  await page.loginIdentificadorInput().sendKeys('ana@cin.ufpe.br');
+  await page.loginSenhaInput().clear();
+  await page.loginSenhaInput().sendKeys('123456');
+  await page.loginButton().click();
+  await browser.wait(EC.visibilityOf(page.welcomeHeader()), 10000);
 });
 
-Given('não existe aluno com CPF {string}', async function (cpf) {
-  await ensureAlunoRemoved(cpf);
-});
-
-When('eu cadastro o aluno {string} com CPF {string}', async function (nome, cpf) {
-  const nameInput = page.nameInput();
-  const cpfInput = page.cpfInput();
-  await browser.wait(EC.presenceOf(nameInput), 10000);
-  await nameInput.clear();
-  await nameInput.sendKeys(nome);
-  await cpfInput.clear();
-  await cpfInput.sendKeys(cpf);
-  const button = await page.addButton();
-  await button.click();
+When('seleciono a turma {string}', async function (turmaNome) {
+  await browser.wait(EC.presenceOf(page.turmaSelect()), 10000);
+  await page.turmaSelect().click();
+  const option = page.turmaOption(turmaNome);
+  await browser.wait(EC.presenceOf(option), 5000);
+  await option.click();
   await wait(500);
 });
 
-Then('o aluno {string} deve aparecer na lista', async function (nome) {
-  const alunos = page.alunosList();
-  await browser.wait(async () => (await alunos.count()) > 0, 10000);
-  const match = await alunos.filter(async elem => {
-    const text = (await elem.getText()).toLowerCase();
-    return text.includes(nome.toLowerCase());
-  });
-  await expect(match.count()).to.eventually.be.greaterThan(0);
+Then('devo ver a turma {string} na lista de turmas', async function (turmaNome) {
+  const option = page.turmaOption(turmaNome);
+  await expect(option.isPresent()).to.eventually.equal(true);
 });
 
-Then('o sistema deve retornar sucesso', async function () {
-  const successToast = element(by.css('.toast-success, .alert-success'));
-  const hasSuccess = await successToast.isPresent();
-  if (hasSuccess) {
-    await expect(successToast.isDisplayed()).to.eventually.equal(true);
-    return;
+Then('devo visualizar alunos listados na tabela', async function () {
+  await browser.wait(async () => (await page.alunosTabela().count()) > 0, 10000);
+  await expect(page.alunosTabela().count()).to.eventually.be.greaterThan(0);
+});
+
+Then('devo visualizar monitores cadastrados no popup', async function () {
+  await page.abrirCadastroMonitores().click();
+  await browser.wait(async () => (await page.monitoresPopupItems().count()) > 0, 10000);
+  await expect(page.monitoresPopupItems().count()).to.eventually.be.greaterThan(0);
+  if (await page.fecharPopup().isPresent()) {
+    await page.fecharPopup().click();
   }
-  const response = await apiPost('/alunos/validar', {});
-  expect(response.response.status).to.be.within(200, 299);
 });
