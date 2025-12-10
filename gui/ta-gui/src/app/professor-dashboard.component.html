@@ -177,12 +177,16 @@
 
 <!-- Pop-up 4 -->
 <div class="popup-overlay" *ngIf="popupAtivo === 'notificacoes'">
-  <div class="popup">
+  <div class="popup notificacoes-popup">
     <h3>Envio de Notificações</h3>
-    <p>Resumo da alocação:</p>
-    <ul>
-      <li *ngFor="let item of notificacaoResumo">{{ item }}</li>
-    </ul>
+    
+    <div class="popup-content">
+      <p>Resumo da alocação:</p>
+      <ul>
+        <li *ngFor="let item of notificacaoResumo">{{ item }}</li>
+      </ul>
+    </div>
+
     <div class="popup-actions">
       <button (click)="enviarNotificacoes()">Enviar notificações</button>
       <button class="secondary" (click)="fecharPopup()">Fechar</button>
