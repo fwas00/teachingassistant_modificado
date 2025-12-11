@@ -22,7 +22,6 @@
     <header>
       <div>
         <h1>Bem-vindo, {{ usuarioAutenticado.usuario.nome }}</h1>
-        <small>Perfil: {{ usuarioAutenticado.tipo | titlecase }}</small>
       </div>
       <button (click)="sair()">Sair</button>
     </header>
