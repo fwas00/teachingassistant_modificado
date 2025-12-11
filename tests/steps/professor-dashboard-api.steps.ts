@@ -7,6 +7,16 @@ if (!(globalThis as any).fetch) {
 }
 
 // ============================================================================
+// IMPLEMENTAÇÃO DE STEPS - TESTES DE SERVIÇO (API)
+// Framework: Cucumber
+// Padrão: BDD (Behavior Driven Development)
+// Estrutura: Given/When/Then (Dado/Quando/Então)
+// Descrição: Define os passos concretos (steps) que implementam os cenários
+//            de teste de API. Cada step Given prepara dados, When executa
+//            requisições HTTP, Then verifica status e respostas.
+// ============================================================================
+
+// ============================================================================
 // CONFIGURAÇÃO INICIAL - TESTES DE API
 // ============================================================================
 setDefaultTimeout(10000);

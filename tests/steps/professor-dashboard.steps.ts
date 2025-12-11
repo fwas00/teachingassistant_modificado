@@ -1,6 +1,16 @@
 import { Given, When, Then, Before, After, setDefaultTimeout, defineStep } from '@cucumber/cucumber';
 
 // ============================================================================
+// IMPLEMENTAÇÃO DE STEPS - TESTES DE ACEITAÇÃO GUI
+// Framework: Cucumber
+// Padrão: BDD (Behavior Driven Development)
+// Estrutura: Given/When/Then (Dado/Quando/Então)
+// Descrição: Define os passos concretos (steps) que implementam os cenários
+//            de teste de aceitação da GUI. Cada step Given prepara estado,
+//            When executa ações do usuário, Then verifica resultados.
+// ============================================================================
+
+// ============================================================================
 // CONFIGURAÇÃO INICIAL
 // ============================================================================
 setDefaultTimeout(30000);
@@ -42,7 +52,6 @@ Before(async () => {
 After(async () => {
   console.log('[CLEANUP] Limpando estado do cenário...');
   testState = {};
-  // Aqui você poderia fazer logout ou resetar sessão
 });
 
 // ============================================================================

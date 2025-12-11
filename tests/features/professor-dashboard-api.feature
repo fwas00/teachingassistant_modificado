@@ -1,4 +1,16 @@
 # language: pt
+
+# ============================================================================
+# CATEGORIA: TESTES DE SERVIÇO (API)
+# Framework: Cucumber
+# Padrão: BDD (Behavior Driven Development)
+# Estrutura: Given/When/Then (Dado/Quando/Então)
+# Descrição: Testes de integração que validam os endpoints HTTP da API.
+#            Cada cenário testa a comunicação entre cliente e servidor,
+#            verificando status HTTP, validação de dados e fluxos de negócio
+#            via requisições REST (GET, POST).
+# ============================================================================
+
 Funcionalidade: Dashboard do Professor - Testes de Serviço (API)
   Como um desenvolvedor
   Quero testar as APIs de gerenciamento de turmas, monitores e alocações

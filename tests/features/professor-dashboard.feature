@@ -1,4 +1,15 @@
 # language: pt
+
+# ============================================================================
+# CATEGORIA: TESTES DE ACEITAÇÃO GUI
+# Framework: Cucumber
+# Padrão: BDD (Behavior Driven Development)
+# Estrutura: Given/When/Then (Dado/Quando/Então)
+# Descrição: Testes de aceitação que validam o comportamento da interface
+#            gráfica do Dashboard do Professor. Cada cenário representa uma
+#            funcionalidade do usuário final (professor).
+# ============================================================================
+
 Funcionalidade: Dashboard do Professor - Testes de Aceitação GUI
   Como um professor
   Quero gerenciar turmas, monitores e alocações
